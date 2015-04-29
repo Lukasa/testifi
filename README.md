@@ -33,8 +33,11 @@ complete set of information for a single test ID, including the results for all
 versions.
 
     {
-        "master": {"result": "success", "status": "complete"},
-        "2015.04.28": {"result": null, "status": "running"}
+        "domain": "mkcert.org",
+        "results": {
+            "master": {"result": "success", "status": "complete"},
+            "2015.04.28": {"result": null, "status": "running"}
+        }
     }
 
 ### `GET /tests/<id>/stream`
