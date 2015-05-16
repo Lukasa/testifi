@@ -7,8 +7,12 @@ This module contains the portions of testifi code that know how to handle
 interacting with PyPI.
 """
 import treq
+import structlog
 
 from twisted.internet.defer import inlineCallbacks, returnValue
+
+
+logger = structlog.getLogger()
 
 
 @inlineCallbacks
@@ -21,11 +25,10 @@ def certifiVersions():
     :returns: A Deferred that fires with a list of tuples of certifi versions
         and tarball URLs.
     """
-    print "it begins!"
+    log = logger.new(function='certifiVersions')
     r = yield treq.get('https://pypi.python.org/pypi/certifi/json', timeout=5)
-    print "response!"
+    log.msg("got certifi versions!")
     data = yield r.json()
-    print "data!"
 
     # Note: this takes advantage of the fact that certifi's releases have the
     # same version number sort order as lexicographical. If that changes,
@@ -46,8 +49,29 @@ def certifiVersions():
         else:
             raise RuntimeError("Unable to locate tarball!")
 
+        log.msg("new release located", version=version, tarball=file[u'url'])
         result.append((version, file[u'url']))
 
-    print result
-
     returnValue(result)
+
+
+@inlineCallbacks
+def downloadFile(remote_path, fobj):
+    """
+    Download a file over HTTP from ``remote_path`` and save it to the provided
+    file object ``fobj``.
+    """
+    logger.msg(
+        "downloading file", remote_path=remote_path, function='downloadFile'
+    )
+
+    def file_writer(data):
+        fobj.write(data)
+
+    remote_path = remote_path.encode('utf-8')
+    r = yield treq.get(remote_path, timeout=5)
+    try:
+        yield treq.collect(r, file_writer)
+    except Exception as e:
+        print e
+        raise

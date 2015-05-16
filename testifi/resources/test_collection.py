@@ -8,12 +8,18 @@ A resource to manage the test collection endpoint in testifi.
 import json
 import uuid
 
+import structlog
+
 from twisted.web import resource
+
+from testifi.supervisor import Test
 
 
 # For now, rather than having a proper database backend, we'll just have an
 # in-memory 'data store'.
 tests = []
+
+logger = structlog.getLogger()
 
 
 class TestCollectionResource(resource.Resource):
@@ -21,6 +27,11 @@ class TestCollectionResource(resource.Resource):
     This resource manages the collection of tests. It accepts POST and GET
     requests.
     """
+    def __init__(self, supervisor):
+        resource.Resource.__init__(self)
+        self.supervisor = supervisor
+        self._log = logger.new(resource='test_collection')
+
     # TODO: Actual logic.
     def render_GET(self, request):
         request.setHeader('Content-Type', 'application/json')
@@ -44,14 +55,9 @@ class TestCollectionResource(resource.Resource):
         # Generate a test ID.
         test_id = str(uuid.uuid4())
 
-        # TODO: Actually test something!
-        tests.append({
-            "test_id": test_id,
-            "domain": domain,
-            "results": {
-                "2015.04.28": {"result": "success", "status": "complete"}
-            }
-        })
+        # Add to the test queue
+        self.supervisor.queue.put(Test(test_id, domain))
+        self._log.msg("test_scheduled", test_id=test_id, host=domain)
 
         request.setHeader('Content-Type', 'application/json')
         response_data = {
