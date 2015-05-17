@@ -91,10 +91,14 @@ class Supervisor(object):
         Tests a given host against a specific certifi release. Returns a
         Deferred that fires with the result of the test.
         """
+        log = self._log.bind(function="_testHostAgainstRelease")
         file_path = os.path.join(self.certifiDirectory, 'certifi-' + release)
+        args = [self.binPath, file_path, host]
+        log.msg("running test", args=args)
+
         result = yield getProcessValue(
-            distutils.spawn.find_executable('python'),
-            args=[self.binPath, file_path, host],
+            distutils.spawn.find_executable('pypy'),
+            args=args,
         )
         returnValue(result)
 
