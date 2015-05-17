@@ -47,7 +47,7 @@ def certifiVersions():
             if file[u'filename'].endswith(u'.tar.gz'):
                 break
         else:
-            raise RuntimeError("Unable to locate tarball!")
+            continue
 
         log.msg("new release located", version=version, tarball=file[u'url'])
         result.append((version, file[u'url']))
