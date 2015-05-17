@@ -31,6 +31,7 @@ setup(
     entry_points={
         'console_scripts': [
             'testifi = testifi.server:runServer',
+            'certifi-test = testifi.certifi_test:main'
         ],
     },
 )
